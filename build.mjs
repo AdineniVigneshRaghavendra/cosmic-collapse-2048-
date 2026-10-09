@@ -21,7 +21,7 @@ for(const part of src.split(/(<script>[\s\S]*?<\/script>|<style>[\s\S]*?<\/style
     }
 }
 
-const uri = "data:text/html," + html.replace(/%/g,"%25").replace(/#/g, "%23").replace(/\n/g, "%0A");
+const uri = "data:text/html;charset=utf-8,"+ html.replace(/%/g,"%25").replace(/#/g, "%23").replace(/</g, "%3C").replace(/>/g, "%3E").replace(/\n/g, "%0A");
 mkdirSync("dist",{ recursive: true});
 writeFileSync("dist/index.html",html);
 writeFileSync("dist/uri.txt",uri);
