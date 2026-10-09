@@ -43,46 +43,136 @@
             <div class="hint">Use arrow keys or W A S D to move<br>Combine matching planets to reach 2048!</div>
         </main>
         <script>
-            const board=document.getElementById("board");
-            const cells=[];
-            
+        const board = document.getElementById("board");
+        const cells = [];
+        const tiles = Array(16).fill(0);
+
+        let score = 0;
+        let best = Number(localStorage.getItem("cosmicBest") || 0);
+
+        document.getElementById("best").textContent = best;
+
+        for(let i=0;i<16;i++){
+            const cell = document.createElement("div");
+            cell.className = "cell";
+            board.appendChild(cell);
+            cells.push(cell);
+
+        }
+
+        function spawnTile() {
+            const empty = [];
+
             for(let i=0;i<16;i++){
-                const cell=document.createElement("div");
-                cell.className="cell";
-                board.appendChild(cell);
-                cells.push(cell);
+                if(tiles[i] == 0) empty.push(i);
 
             }
 
-            const tiles=Array(16).fill(0);
+            if(!empty.length) return;
 
-            function spawnTile(){
-                const empty = [];
-                for(let i=0; i<16; i++)
-            {
-                if(tiles[i]===0) empty.push(i);
+            const spot = empty[Math.floor(Math.random() * empty.length)];
+            tiles[spot] = Math.random() < 0.9 ? 2 : 4;
+
+ 
+        }
+
+        function draw() {
+            for(let i=0;i<16;i++) {
+                const value = tiles[i];
+                cells[i].textContent = value || "";
+                cells[i].className = "cell" + (value ? " v" + value : "");
+
             }
+            document.getElementById("score").textContent = score;
+            document.getElementById("best").textContent = best;
 
-            if(empty.length === 0) return;
+        }
 
+        function slideLine(line) {
+            const values = line.filter(value => value !== 0);
+            const result = [];
+            let gained = 0;
+            for(let i=0;i<values.length;i++)
+        {
+            if(values[i] === values[i + 1]) {
+                const merged = values[i] * 2;
+                result.push(merged);
+                gained += merged;
+                i++;
 
+            }else {
+                result.push(values[i]);
+            }
+        }
+        while (result.length < 4) result.push(0);
+
+        return { result, gained};
+    }
+
+    function move(direction) {
+        const before = tiles.join(",");
+        let gained = 0;
+
+        for(let n=0; n<4;n++) {
+            const indexes = [];
+
+            for(let j=0; j<4;j++) {
+                if(direction === "left") indexes.push(n * 4 + j);
+                if(direction === "right") indexes.push(n * 4 +(3 - j));
+                if(direction === "up") indexes.push(j * 4 + n);
+                if(direction === "down") indexes.push((3-j) *4 + n);
+            }
+            const line = indexes.map(index => tiles[index]);
+            const { result, gained: points } = slideLine(line);
+            gained += points;
+
+            indexes.forEach((index,j) => {
+                tiles[index] = result[j];
+            });
+
+        }
+
+        if(tiles.join(",") === before) return;
             
-                if(empty.length===0)return;
 
-                const spot=empty[Math.floor(Math.random()*empty.length)];
-                tiles.forEach((value,index)=>{
-                    cells[index].textContent=value||"";
-                    cells[index].className="cell"+(value?" v"+value:"");
+            score += gained;
 
-                });
-
-
-
-
+            if(score > best) {
+                best = score;
+                localStorage.setItem("cosmicBest",best);
             }
-            spawnTile();
+
             spawnTile();
             draw();
+    }
+    
+    document.addEventListener("keydown", event => {
+        const keys = {
+            ArrowLeft: "left",
+            ArrowRight: "right",
+            ArrowUp: "up",
+            ArrowDown: "down",
+            a: "left",
+            d: "right",
+            w: "up",
+            s: "down"
+
+        };
+
+        const direction = keys[event.key] || keys[event.key.toLowerCase()];
+
+        if(direction) {
+            event.preventDefault();
+            move(direction);
+        }
+    });
+
+    spawnTile();
+    spawnTile();
+    draw();
+
+    
+
         </script>
     </body>
 </html>
